@@ -43,8 +43,38 @@ async function refresh() {
 async function render(data) {
     const { invoices = [], quotes = [], expenses = [], travelLogs = [] } = data;
     
+    // Render business header with logo
+    await renderBusinessHeader();
+    
     renderFinancialSummary(invoices, expenses);
     renderTravelSummary(travelLogs);
+}
+
+async function renderBusinessHeader() {
+    const container = document.getElementById('dashboardHeader');
+    
+    if (!container) {
+        console.error('[Dashboard] dashboardHeader element not found');
+        return;
+    }
+    
+    try {
+        const profile = await storage.getBusinessProfile();
+        
+        if (profile && (profile.logoDataUrl || profile.businessName)) {
+            container.innerHTML = `
+                <div class="dashboard-business-info">
+                    ${profile.logoDataUrl ? `<img src="${profile.logoDataUrl}" alt="Business Logo" class="dashboard-logo">` : ''}
+                    ${profile.businessName ? `<h2 class="dashboard-business-name">${profile.businessName}</h2>` : ''}
+                </div>
+            `;
+        } else {
+            container.innerHTML = '';
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error loading business profile:', error);
+        container.innerHTML = '';
+    }
 }
 
 function renderFinancialSummary(invoices, expenses) {
