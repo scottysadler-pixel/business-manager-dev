@@ -114,6 +114,24 @@
                     <h2>Invoices</h2>
                     <button class="btn btn-primary" id="newInvoiceBtn">New Invoice</button>
                 </div>
+                <div class="invoice-filters">
+                    <div class="filter-group">
+                        <label>Filter:</label>
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="unpaid">Unpaid</button>
+                        <button class="filter-btn" data-filter="overdue">Overdue</button>
+                        <button class="filter-btn" data-filter="paid">Paid</button>
+                    </div>
+                    <div class="filter-group">
+                        <label for="invoiceSort">Sort by:</label>
+                        <select id="invoiceSort" class="sort-select">
+                            <option value="number">Invoice # (desc)</option>
+                            <option value="dueDate">Due Date (asc)</option>
+                            <option value="amount">Amount (desc)</option>
+                            <option value="customer">Customer (A-Z)</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="action-bar">
                     <button class="btn btn-secondary btn-small" id="exportInvoicesCSV">Export CSV</button>
                 </div>
