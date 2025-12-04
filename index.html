@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Manager</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen" style="display: none;">
+        <div class="login-card">
+            <div id="loginLogo" class="login-logo"></div>
+            <h1>Business Manager</h1>
+            <div id="loginForm">
+                <h2>Sign In</h2>
+                <form id="loginFormElement">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" required autofocus>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+                </form>
+                <p style="text-align: center; margin-top: 1rem;">
+                    Don't have an account? <a href="#" id="showSignup">Sign Up</a>
+                </p>
+            </div>
+            <div id="signupForm" style="display: none;">
+                <h2>Create Account</h2>
+                <form id="signupFormElement">
+                    <div class="form-group">
+                        <label for="signupEmail">Email</label>
+                        <input type="email" id="signupEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupPassword">Password</label>
+                        <input type="password" id="signupPassword" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="signupPasswordConfirm">Confirm Password</label>
+                        <input type="password" id="signupPasswordConfirm" required minlength="6">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+                </form>
+                <p style="text-align: center; margin-top: 1rem;">
+                    Already have an account? <a href="#" id="showLogin">Sign In</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="app-container" style="display: none;">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>Business Manager</h1>
+            <nav class="main-nav">
+                <button class="nav-btn active" data-tab="dashboard" id="dashboardBtn">Dashboard</button>
+                <button class="nav-btn" data-tab="quotes" id="quotesBtn">Quotes</button>
+                <button class="nav-btn" data-tab="invoices" id="invoicesBtn">Invoices</button>
+                <button class="nav-btn" data-tab="expenses" id="expensesBtn">Expenses</button>
+                <button class="nav-btn" data-tab="travel" id="travelBtn">Travel Log</button>
+                <button class="nav-btn" data-tab="notes" id="notesBtn">Job Notes</button>
+                <button class="nav-btn" data-tab="contacts" id="contactsBtn">Contacts</button>
+                <button class="nav-btn" data-tab="settings" id="settingsBtn">Settings</button>
+                <button class="nav-btn" id="logoutBtn">Logout</button>
+            </nav>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <div class="section-header">
+                    <h2>Dashboard</h2>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3>Financial Summary</h3>
+                        <div id="financialSummary"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Travel Summary</h3>
+                        <div id="travelSummary"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quotes Tab -->
+            <div id="quotes" class="tab-content">
+                <div class="section-header">
+                    <h2>Quotes</h2>
+                    <button class="btn btn-primary" id="newQuoteBtn">New Quote</button>
+                </div>
+                <div class="action-bar">
+                    <button class="btn btn-secondary btn-small" id="exportQuotesCSV">Export CSV</button>
+                </div>
+                <div id="quotesList" class="data-list"></div>
+            </div>
+
+            <!-- Invoices Tab -->
+            <div id="invoices" class="tab-content">
+                <div class="section-header">
+                    <h2>Invoices</h2>
+                    <button class="btn btn-primary" id="newInvoiceBtn">New Invoice</button>
+                </div>
+                <div class="action-bar">
+                    <button class="btn btn-secondary btn-small" id="exportInvoicesCSV">Export CSV</button>
+                </div>
+                <div id="invoicesList" class="data-list"></div>
+            </div>
+
+            <!-- Expenses Tab -->
+            <div id="expenses" class="tab-content">
+                <div class="section-header">
+                    <h2>Expenses</h2>
+                    <button class="btn btn-primary" id="newExpenseBtn">New Expense</button>
+                </div>
+                <div class="action-bar">
+                    <button class="btn btn-secondary btn-small" id="exportExpensesCSV">Export CSV</button>
+                </div>
+                <div id="expensesList" class="data-list"></div>
+            </div>
+
+            <!-- Travel Log Tab -->
+            <div id="travel" class="tab-content">
+                <div class="section-header">
+                    <h2>Travel Log</h2>
+                    <button class="btn btn-primary" id="newTravelBtn">New Entry</button>
+                </div>
+                <div id="travelList" class="data-list"></div>
+            </div>
+
+            <!-- Job Notes Tab -->
+            <div id="notes" class="tab-content">
+                <div class="section-header">
+                    <h2>Job Notes</h2>
+                    <button class="btn btn-primary" id="newNoteBtn">New Note</button>
+                </div>
+                <div id="notesList" class="data-list"></div>
+            </div>
+
+            <!-- Contacts Tab -->
+            <div id="contacts" class="tab-content">
+                <div class="section-header">
+                    <h2>Contacts</h2>
+                    <button class="btn btn-primary" id="newContactBtn">New Contact</button>
+                </div>
+                <div class="action-bar">
+                    <input type="text" id="contactSearch" placeholder="Search contacts..." style="padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; width: 300px;">
+                </div>
+                <div id="contactsList" class="data-list"></div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings" class="tab-content">
+                <div class="section-header">
+                    <h2>Settings</h2>
+                </div>
+                <div class="settings-container">
+                    <div class="card">
+                        <h3>Business Profile</h3>
+                        <form id="businessProfileForm">
+                            <div class="form-group">
+                                <label for="businessName">Business Name</label>
+                                <input type="text" id="businessName" name="businessName">
+                            </div>
+                            <div class="form-group">
+                                <label for="businessAddress">Address</label>
+                                <textarea id="businessAddress" name="address" rows="3"></textarea>
+                            </div>
+                            <div class="form-group-inline">
+                                <div class="form-group">
+                                    <label for="businessPhone">Phone</label>
+                                    <input type="tel" id="businessPhone" name="phone">
+                                </div>
+                                <div class="form-group">
+                                    <label for="businessEmail">Email</label>
+                                    <input type="email" id="businessEmail" name="email">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="businessABN">ABN</label>
+                                <input type="text" id="businessABN" name="abn">
+                            </div>
+                            <div class="form-group">
+                                <label for="businessLogo">Business Logo</label>
+                                <input type="file" id="businessLogo" accept="image/*">
+                                <div id="logoPreview" class="logo-preview"></div>
+                            </div>
+                            <h4 style="margin-top: 1.5rem; margin-bottom: 1rem;">Bank Details</h4>
+                            <div class="form-group">
+                                <label for="bankName">Bank Name</label>
+                                <input type="text" id="bankName" name="bankName">
+                            </div>
+                            <div class="form-group-inline">
+                                <div class="form-group">
+                                    <label for="bankBSB">BSB</label>
+                                    <input type="text" id="bankBSB" name="bankBSB">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bankAccount">Account Number</label>
+                                    <input type="text" id="bankAccount" name="bankAccount">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="bankAccountName">Account Name</label>
+                                <input type="text" id="bankAccountName" name="bankAccountName">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Profile</button>
+                        </form>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>Data Management</h3>
+                        <div class="settings-actions">
+                            <button class="btn btn-secondary" id="exportDataBtn">📥 Export All Data (JSON)</button>
+                            <button class="btn btn-secondary" id="migrateFromLocalBtn">🔄 Import from localStorage</button>
+                            <label for="importDataFile" class="btn btn-secondary" style="display: inline-block; cursor: pointer;">
+                                📤 Import Data (JSON)
+                                <input type="file" id="importDataFile" accept=".json" style="display: none;">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Print Area (Hidden) -->
+    <div id="printArea" class="print-area"></div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Modal Container (ADDED - THIS WAS MISSING!) -->
+    <div id="modalContainer"></div>
+
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAQSc_teVaHc6Tjg4yrbJSDqsHz_IbYgB8",
+            authDomain: "mr-cybersafe-business-manager.firebaseapp.com",
+            projectId: "mr-cybersafe-business-manager",
+            storageBucket: "mr-cybersafe-business-manager.firebasestorage.app",
+            messagingSenderId: "729377231108",
+            appId: "1:729377231108:web:4d3a7cde8296452b3c8051",
+            measurementId: "G-FSHBN3DTG7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.firebaseAuth = getAuth(app);
+        window.firebaseDb = getFirestore(app);
+        
+        console.log('[Firebase] Initialized successfully');
+    </script>
+
+    <!-- Main App Script -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
