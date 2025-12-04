@@ -1,5 +1,5 @@
 import * as storage from './storage.js';
-import { formatCurrency } from './utils.js';
+import { formatCurrency, isInvoiceOverdue } from './utils.js';
 import { CONFIG } from './config.js';
 
 export function init() {
@@ -55,16 +55,6 @@ function renderFinancialSummary(invoices, expenses) {
         return;
     }
     
-    // Helper to check if invoice is overdue
-    const isOverdue = (invoice) => {
-        if (invoice.status === 'Paid') return false;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const dueDate = new Date(invoice.dueDate);
-        dueDate.setHours(0, 0, 0, 0);
-        return dueDate < today;
-    };
-    
     // Calculate totals
     const totalPaid = invoices
         .filter(inv => inv.status === 'Paid')
@@ -74,7 +64,7 @@ function renderFinancialSummary(invoices, expenses) {
         .filter(inv => inv.status !== 'Paid')
         .reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
     
-    const overdueInvoices = invoices.filter(inv => isOverdue(inv));
+    const overdueInvoices = invoices.filter(inv => isInvoiceOverdue(inv));
     const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
     const overdueCount = overdueInvoices.length;
     

@@ -57,6 +57,18 @@ export function getDateInDays(days) {
 }
 
 /**
+ * Check if an invoice is overdue
+ */
+export function isInvoiceOverdue(invoice) {
+    if (invoice.status === 'Paid') return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(invoice.dueDate);
+    dueDate.setHours(0, 0, 0, 0);
+    return dueDate < today;
+}
+
+/**
  * Calculate totals from line items and tax rate
  */
 export function calculateTotal(lineItems, taxRate, gstInclusive = false) {

@@ -8,7 +8,8 @@ import {
     calculateTotal,
     generateId,
     showToast,
-    downloadCSV
+    downloadCSV,
+    isInvoiceOverdue
 } from './utils.js';
 import { showModal, showConfirm } from './modal.js';
 import { CONFIG } from './config.js';
@@ -114,22 +115,12 @@ async function render() {
         return;
     }
     
-    // Helper to check if invoice is overdue
-    const isOverdue = (invoice) => {
-        if (invoice.status === 'Paid') return false;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const dueDate = new Date(invoice.dueDate);
-        dueDate.setHours(0, 0, 0, 0);
-        return dueDate < today;
-    };
-    
     // Filter invoices
     let filtered = [...invoices];
     if (currentFilter === 'unpaid') {
         filtered = filtered.filter(inv => inv.status !== 'Paid');
     } else if (currentFilter === 'overdue') {
-        filtered = filtered.filter(inv => isOverdue(inv));
+        filtered = filtered.filter(inv => isInvoiceOverdue(inv));
     } else if (currentFilter === 'paid') {
         filtered = filtered.filter(inv => inv.status === 'Paid');
     }
@@ -146,7 +137,7 @@ async function render() {
     }
     
     container.innerHTML = filtered.map(invoice => {
-        const overdue = isOverdue(invoice);
+        const overdue = isInvoiceOverdue(invoice);
         return `
         <div class="data-item ${overdue ? 'overdue' : ''}">
             <div class="data-item-content">
@@ -167,7 +158,7 @@ async function render() {
                 <button class="btn btn-small btn-primary" data-action="edit-invoice" data-id="${invoice.id}">Edit</button>
                 <button class="btn btn-small btn-secondary" data-action="print-invoice" data-id="${invoice.id}">Print</button>
                 ${invoice.status === 'Sent' ? 
-                    `<button class="btn btn-small" style="background: #8b5cf6; color: white;" data-action="mark-submitted" data-id="${invoice.id}">Mark Submitted</button>` 
+                    `<button class="btn btn-small btn-submitted" data-action="mark-submitted" data-id="${invoice.id}">Mark Submitted</button>` 
                     : ''}
                 ${invoice.status !== 'Paid' ? 
                     `<button class="btn btn-small btn-success" data-action="mark-paid" data-id="${invoice.id}">Mark Paid</button>` 

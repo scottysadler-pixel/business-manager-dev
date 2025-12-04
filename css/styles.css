@@ -251,6 +251,15 @@ body {
     background: #dc2626;
 }
 
+.btn-submitted {
+    background: #8b5cf6;
+    color: white;
+}
+
+.btn-submitted:hover {
+    background: #7c3aed;
+}
+
 .btn-small {
     padding: 0.375rem 0.75rem;
     font-size: 0.8125rem;
