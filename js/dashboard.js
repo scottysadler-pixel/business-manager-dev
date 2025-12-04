@@ -62,12 +62,31 @@ async function renderBusinessHeader() {
         const profile = await storage.getBusinessProfile();
         
         if (profile && (profile.logoDataUrl || profile.businessName)) {
-            container.innerHTML = `
-                <div class="dashboard-business-info">
-                    ${profile.logoDataUrl ? `<img src="${profile.logoDataUrl}" alt="Business Logo" class="dashboard-logo">` : ''}
-                    ${profile.businessName ? `<h2 class="dashboard-business-name">${profile.businessName}</h2>` : ''}
-                </div>
-            `;
+            // Clear container
+            container.innerHTML = '';
+            
+            // Create wrapper div
+            const wrapper = document.createElement('div');
+            wrapper.className = 'dashboard-business-info';
+            
+            // Add logo if exists
+            if (profile.logoDataUrl) {
+                const logo = document.createElement('img');
+                logo.src = profile.logoDataUrl;
+                logo.alt = 'Business Logo';
+                logo.className = 'dashboard-logo';
+                wrapper.appendChild(logo);
+            }
+            
+            // Add business name if exists
+            if (profile.businessName) {
+                const heading = document.createElement('h2');
+                heading.className = 'dashboard-business-name';
+                heading.textContent = profile.businessName; // Safe - uses textContent instead of innerHTML
+                wrapper.appendChild(heading);
+            }
+            
+            container.appendChild(wrapper);
         } else {
             container.innerHTML = '';
         }
