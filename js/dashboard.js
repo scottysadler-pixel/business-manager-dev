@@ -1,5 +1,5 @@
 import * as storage from './storage.js';
-import { formatCurrency } from './utils.js';
+import { formatCurrency, isInvoiceOverdue } from './utils.js';
 import { CONFIG } from './config.js';
 
 export function init() {
@@ -64,6 +64,12 @@ function renderFinancialSummary(invoices, expenses) {
         .filter(inv => inv.status !== 'Paid')
         .reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
     
+    const overdueInvoices = invoices.filter(inv => isInvoiceOverdue(inv));
+    const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
+    const overdueCount = overdueInvoices.length;
+    
+    const unpaidCount = invoices.filter(inv => inv.status !== 'Paid').length;
+    
     const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
     
     const netIncome = totalPaid - totalExpenses;
@@ -76,6 +82,18 @@ function renderFinancialSummary(invoices, expenses) {
         <div class="stat">
             <span class="stat-label">Outstanding:</span>
             <span class="stat-value">${formatCurrency(totalOutstanding)}</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Unpaid Count:</span>
+            <span class="stat-value">${unpaidCount}</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Overdue Amount:</span>
+            <span class="stat-value ${overdueAmount > 0 ? 'warning' : ''}">${formatCurrency(overdueAmount)}</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Overdue Count:</span>
+            <span class="stat-value ${overdueCount > 0 ? 'warning' : ''}">${overdueCount}</span>
         </div>
         <div class="stat">
             <span class="stat-label">Total Expenses:</span>

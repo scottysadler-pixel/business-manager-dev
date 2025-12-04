@@ -8,13 +8,16 @@ import {
     calculateTotal,
     generateId,
     showToast,
-    downloadCSV
+    downloadCSV,
+    isInvoiceOverdue
 } from './utils.js';
 import { showModal, showConfirm } from './modal.js';
 import { CONFIG } from './config.js';
 
 let invoices = [];
 let currentInvoice = null;
+let currentFilter = 'all';
+let currentSort = 'number';
 
 export function init() {
     console.log('[Invoices] Initializing...');
@@ -36,6 +39,22 @@ export function init() {
     
     document.getElementById('newInvoiceBtn').addEventListener('click', () => openInvoiceModal());
     document.getElementById('exportInvoicesCSV').addEventListener('click', exportCSV);
+    
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentFilter = e.target.dataset.filter;
+            render();
+        });
+    });
+    
+    // Sort dropdown
+    document.getElementById('invoiceSort').addEventListener('change', (e) => {
+        currentSort = e.target.value;
+        render();
+    });
     
     document.addEventListener('click', handleInvoiceActions);
 }
@@ -73,6 +92,9 @@ function handleInvoiceActions(e) {
         case 'mark-paid':
             markAsPaid(id);
             break;
+        case 'mark-submitted':
+            markAsSubmitted(id);
+            break;
         case 'delete-invoice':
             deleteInvoice(id);
             break;
@@ -93,10 +115,31 @@ async function render() {
         return;
     }
     
-    const sorted = [...invoices].sort((a, b) => b.invoiceNumber - a.invoiceNumber);
+    // Filter invoices
+    let filtered = [...invoices];
+    if (currentFilter === 'unpaid') {
+        filtered = filtered.filter(inv => inv.status !== 'Paid');
+    } else if (currentFilter === 'overdue') {
+        filtered = filtered.filter(inv => isInvoiceOverdue(inv));
+    } else if (currentFilter === 'paid') {
+        filtered = filtered.filter(inv => inv.status === 'Paid');
+    }
     
-    container.innerHTML = sorted.map(invoice => `
-        <div class="data-item">
+    // Sort invoices
+    if (currentSort === 'number') {
+        filtered.sort((a, b) => b.invoiceNumber - a.invoiceNumber);
+    } else if (currentSort === 'dueDate') {
+        filtered.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+    } else if (currentSort === 'amount') {
+        filtered.sort((a, b) => b.totalAmount - a.totalAmount);
+    } else if (currentSort === 'customer') {
+        filtered.sort((a, b) => a.customerName.localeCompare(b.customerName));
+    }
+    
+    container.innerHTML = filtered.map(invoice => {
+        const overdue = isInvoiceOverdue(invoice);
+        return `
+        <div class="data-item ${overdue ? 'overdue' : ''}">
             <div class="data-item-content">
                 <div class="data-item-title">
                     Invoice #${invoice.invoiceNumber} - ${invoice.customerName}
@@ -107,19 +150,24 @@ async function render() {
                     <span>Due: ${formatDate(invoice.dueDate)}</span>
                     <span>Total: ${formatCurrency(invoice.totalAmount)}</span>
                     <span class="status-badge ${invoice.status.toLowerCase()}">${invoice.status}</span>
+                    ${overdue ? '<span class="overdue-badge">⚠️ OVERDUE</span>' : ''}
                 </div>
             </div>
             <div class="data-item-actions">
                 <button class="btn btn-small btn-secondary" data-action="view-invoice" data-id="${invoice.id}">View</button>
                 <button class="btn btn-small btn-primary" data-action="edit-invoice" data-id="${invoice.id}">Edit</button>
                 <button class="btn btn-small btn-secondary" data-action="print-invoice" data-id="${invoice.id}">Print</button>
+                ${invoice.status === 'Sent' ? 
+                    `<button class="btn btn-small btn-submitted" data-action="mark-submitted" data-id="${invoice.id}">Mark Submitted</button>` 
+                    : ''}
                 ${invoice.status !== 'Paid' ? 
                     `<button class="btn btn-small btn-success" data-action="mark-paid" data-id="${invoice.id}">Mark Paid</button>` 
                     : ''}
                 <button class="btn btn-small btn-danger" data-action="delete-invoice" data-id="${invoice.id}">Delete</button>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function openInvoiceModal(invoice = null) {
@@ -198,6 +246,7 @@ function createInvoiceForm(data) {
                 <select id="invoiceStatus" name="status">
                     <option value="Draft" ${data.status === 'Draft' ? 'selected' : ''}>Draft</option>
                     <option value="Sent" ${data.status === 'Sent' ? 'selected' : ''}>Sent</option>
+                    <option value="Submitted" ${data.status === 'Submitted' ? 'selected' : ''}>Submitted</option>
                     <option value="Paid" ${data.status === 'Paid' ? 'selected' : ''}>Paid</option>
                 </select>
             </div>
@@ -430,6 +479,15 @@ function viewInvoice(id) {
             <p><strong>Due Date:</strong> ${formatDate(invoice.dueDate)}</p>
             <p><strong>Status:</strong> <span class="status-badge ${invoice.status.toLowerCase()}">${invoice.status}</span></p>
             
+            ${invoice.status === 'Paid' && invoice.paidDate ? `
+                <div style="margin-top: 1rem; padding: 1rem; background: #d1fae5; border-radius: 0.375rem;">
+                    <h4 style="margin-top: 0; color: #065f46;">Payment Details</h4>
+                    <p><strong>Date Paid:</strong> ${formatDate(invoice.paidDate)}</p>
+                    <p><strong>Payment Method:</strong> ${invoice.paymentMethod}</p>
+                    ${invoice.paymentReference ? `<p><strong>Reference:</strong> ${invoice.paymentReference}</p>` : ''}
+                </div>
+            ` : ''}
+            
             <h4>Line Items</h4>
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
@@ -485,24 +543,93 @@ async function deleteInvoice(id) {
     }
 }
 
-async function markAsPaid(id) {
+async function markAsSubmitted(id) {
     const invoice = invoices.find(i => i.id === id);
     if (!invoice) return;
     
-    const confirmed = await showConfirm('Mark this invoice as paid?');
+    const confirmed = await showConfirm('Mark this invoice as submitted?');
     if (!confirmed) return;
     
-    invoice.status = 'Paid';
+    invoice.status = 'Submitted';
     
     try {
         await storage.saveInvoice(invoice);
-        showToast('Invoice marked as paid', 'success');
+        showToast('Invoice marked as submitted', 'success');
         await refresh();
         window.dispatchEvent(new CustomEvent('dataRefresh'));
     } catch (error) {
         showToast('Error updating invoice', 'error');
         console.error(error);
     }
+}
+
+async function markAsPaid(id) {
+    const invoice = invoices.find(i => i.id === id);
+    if (!invoice) return;
+    
+    // Create payment details form
+    const form = document.createElement('form');
+    form.innerHTML = `
+        <div class="form-group">
+            <label for="paidDate">Date Paid *</label>
+            <input type="date" id="paidDate" name="paidDate" value="${getTodayString()}" required>
+        </div>
+        <div class="form-group">
+            <label for="paymentMethod">Payment Method *</label>
+            <select id="paymentMethod" name="paymentMethod" required>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Cash">Cash</option>
+                <option value="Card">Card</option>
+                <option value="Cheque">Cheque</option>
+                <option value="PayPal">PayPal</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="paymentReference">Payment Reference</label>
+            <input type="text" id="paymentReference" name="paymentReference" placeholder="e.g., Bank reference, cheque number">
+        </div>
+    `;
+    
+    showModal(form, {
+        title: 'Payment Details',
+        buttons: [
+            {
+                text: 'Cancel',
+                primary: false,
+                onClick: () => {}
+            },
+            {
+                text: 'Mark as Paid',
+                primary: true,
+                onClick: async () => {
+                    const paidDate = form.querySelector('#paidDate')?.value;
+                    const paymentMethod = form.querySelector('#paymentMethod')?.value;
+                    const paymentReference = form.querySelector('#paymentReference')?.value || '';
+                    
+                    if (!paidDate || !paymentMethod) {
+                        showToast('Please fill in required fields', 'error');
+                        return;
+                    }
+                    
+                    invoice.status = 'Paid';
+                    invoice.paidDate = paidDate;
+                    invoice.paymentMethod = paymentMethod;
+                    invoice.paymentReference = paymentReference;
+                    
+                    try {
+                        await storage.saveInvoice(invoice);
+                        showToast('Invoice marked as paid', 'success');
+                        await refresh();
+                        window.dispatchEvent(new CustomEvent('dataRefresh'));
+                    } catch (error) {
+                        showToast('Error updating invoice', 'error');
+                        console.error(error);
+                    }
+                }
+            }
+        ]
+    });
 }
 
 async function printInvoice(id) {
@@ -547,6 +674,15 @@ async function printInvoice(id) {
                 </div>
             </div>
             
+            ${invoice.status === 'Paid' && invoice.paidDate ? `
+                <div style="margin-top: 1rem; padding: 1rem; background: #d1fae5; border: 2px solid #065f46; border-radius: 0.375rem;">
+                    <strong style="color: #065f46;">PAID</strong><br>
+                    <strong>Date Paid:</strong> ${formatDate(invoice.paidDate)}<br>
+                    <strong>Payment Method:</strong> ${invoice.paymentMethod}<br>
+                    ${invoice.paymentReference ? `<strong>Reference:</strong> ${invoice.paymentReference}<br>` : ''}
+                </div>
+            ` : ''}
+            
             <div class="print-line-items">
                 <table>
                     <thead>
@@ -577,17 +713,19 @@ async function printInvoice(id) {
                 </div>
             </div>
             
-            <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ccc;">
-                <p><strong>Payment Details:</strong></p>
-                <p>Please make payment by ${formatDate(invoice.dueDate)}</p>
-                ${profile.bankName ? `
-                    <div style="margin-top: 1rem;">
-                        <p><strong>Bank:</strong> ${profile.bankName}</p>
-                        <p><strong>BSB:</strong> ${profile.bankBSB || ''} &nbsp;&nbsp; <strong>Account:</strong> ${profile.bankAccount || ''}</p>
-                        <p><strong>Account Name:</strong> ${profile.bankAccountName || ''}</p>
-                    </div>
-                ` : ''}
-            </div>
+            ${invoice.status !== 'Paid' ? `
+                <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ccc;">
+                    <p><strong>Payment Details:</strong></p>
+                    <p>Please make payment by ${formatDate(invoice.dueDate)}</p>
+                    ${profile.bankName ? `
+                        <div style="margin-top: 1rem;">
+                            <p><strong>Bank:</strong> ${profile.bankName}</p>
+                            <p><strong>BSB:</strong> ${profile.bankBSB || ''} &nbsp;&nbsp; <strong>Account:</strong> ${profile.bankAccount || ''}</p>
+                            <p><strong>Account Name:</strong> ${profile.bankAccountName || ''}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            ` : ''}
         </div>
     `;
     
