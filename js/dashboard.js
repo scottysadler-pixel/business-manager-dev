@@ -43,8 +43,57 @@ async function refresh() {
 async function render(data) {
     const { invoices = [], quotes = [], expenses = [], travelLogs = [] } = data;
     
+    // Render business header with logo
+    await renderBusinessHeader();
+    
     renderFinancialSummary(invoices, expenses);
     renderTravelSummary(travelLogs);
+}
+
+async function renderBusinessHeader() {
+    const container = document.getElementById('dashboardHeader');
+    
+    if (!container) {
+        console.error('[Dashboard] dashboardHeader element not found');
+        return;
+    }
+    
+    try {
+        const profile = await storage.getBusinessProfile();
+        
+        if (profile && (profile.logoDataUrl || profile.businessName)) {
+            // Clear container
+            container.innerHTML = '';
+            
+            // Create wrapper div
+            const wrapper = document.createElement('div');
+            wrapper.className = 'dashboard-business-info';
+            
+            // Add logo if exists
+            if (profile.logoDataUrl) {
+                const logo = document.createElement('img');
+                logo.src = profile.logoDataUrl;
+                logo.alt = 'Business Logo';
+                logo.className = 'dashboard-logo';
+                wrapper.appendChild(logo);
+            }
+            
+            // Add business name if exists
+            if (profile.businessName) {
+                const heading = document.createElement('h2');
+                heading.className = 'dashboard-business-name';
+                heading.textContent = profile.businessName; // Safe - uses textContent instead of innerHTML
+                wrapper.appendChild(heading);
+            }
+            
+            container.appendChild(wrapper);
+        } else {
+            container.innerHTML = '';
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error loading business profile:', error);
+        container.innerHTML = '';
+    }
 }
 
 function renderFinancialSummary(invoices, expenses) {

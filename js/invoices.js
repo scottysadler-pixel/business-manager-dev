@@ -92,9 +92,6 @@ function handleInvoiceActions(e) {
         case 'mark-paid':
             markAsPaid(id);
             break;
-        case 'mark-submitted':
-            markAsSubmitted(id);
-            break;
         case 'delete-invoice':
             deleteInvoice(id);
             break;
@@ -157,9 +154,6 @@ async function render() {
                 <button class="btn btn-small btn-secondary" data-action="view-invoice" data-id="${invoice.id}">View</button>
                 <button class="btn btn-small btn-primary" data-action="edit-invoice" data-id="${invoice.id}">Edit</button>
                 <button class="btn btn-small btn-secondary" data-action="print-invoice" data-id="${invoice.id}">Print</button>
-                ${invoice.status === 'Sent' ? 
-                    `<button class="btn btn-small btn-submitted" data-action="mark-submitted" data-id="${invoice.id}">Mark Submitted</button>` 
-                    : ''}
                 ${invoice.status !== 'Paid' ? 
                     `<button class="btn btn-small btn-success" data-action="mark-paid" data-id="${invoice.id}">Mark Paid</button>` 
                     : ''}
@@ -246,7 +240,6 @@ function createInvoiceForm(data) {
                 <select id="invoiceStatus" name="status">
                     <option value="Draft" ${data.status === 'Draft' ? 'selected' : ''}>Draft</option>
                     <option value="Sent" ${data.status === 'Sent' ? 'selected' : ''}>Sent</option>
-                    <option value="Submitted" ${data.status === 'Submitted' ? 'selected' : ''}>Submitted</option>
                     <option value="Paid" ${data.status === 'Paid' ? 'selected' : ''}>Paid</option>
                 </select>
             </div>
@@ -539,26 +532,6 @@ async function deleteInvoice(id) {
         window.dispatchEvent(new CustomEvent('dataRefresh'));
     } catch (error) {
         showToast('Error deleting invoice', 'error');
-        console.error(error);
-    }
-}
-
-async function markAsSubmitted(id) {
-    const invoice = invoices.find(i => i.id === id);
-    if (!invoice) return;
-    
-    const confirmed = await showConfirm('Mark this invoice as submitted?');
-    if (!confirmed) return;
-    
-    invoice.status = 'Submitted';
-    
-    try {
-        await storage.saveInvoice(invoice);
-        showToast('Invoice marked as submitted', 'success');
-        await refresh();
-        window.dispatchEvent(new CustomEvent('dataRefresh'));
-    } catch (error) {
-        showToast('Error updating invoice', 'error');
         console.error(error);
     }
 }
