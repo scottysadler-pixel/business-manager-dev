@@ -356,28 +356,17 @@ body {
 }
 
 .dashboard-logo {
-    max-height: 100px;
-    max-width: 300px;
+    max-height: 180px;
+    max-width: 500px;
     width: auto;
     height: auto;
     object-fit: contain;
 }
 
-.dashboard-business-name {
-    margin: 0;
-    font-size: 1.75rem;
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
 @media (max-width: 768px) {
     .dashboard-logo {
-        max-height: 80px;
-        max-width: 200px;
-    }
-    
-    .dashboard-business-name {
-        font-size: 1.5rem;
+        max-height: 120px;
+        max-width: 350px;
     }
 }
 
