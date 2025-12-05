@@ -284,14 +284,13 @@ body {
 }
 
 .btn-secondary {
-    background: transparent;
-    color: var(--accent-cyan);
-    border: 1px solid var(--accent-cyan);
+    background: var(--text-secondary);
+    color: var(--bg-primary);
 }
 
 .btn-secondary:hover {
-    background: var(--accent-cyan-light);
-    box-shadow: var(--glow-cyan);
+    background: var(--text-primary);
+    box-shadow: var(--shadow-md);
 }
 
 .btn-success {
