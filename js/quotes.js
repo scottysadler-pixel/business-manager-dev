@@ -8,7 +8,9 @@ import {
     calculateTotal,
     generateId,
     showToast,
-    downloadCSV
+    downloadCSV,
+    isQuoteExpired,
+    isQuoteExpiringSoon
 } from './utils.js';
 import { showModal, showConfirm } from './modal.js';
 import { CONFIG } from './config.js';
@@ -95,8 +97,13 @@ async function render() {
     
     const sorted = [...quotes].sort((a, b) => b.quoteNumber - a.quoteNumber);
     
-    container.innerHTML = sorted.map(quote => `
-        <div class="data-item">
+    container.innerHTML = sorted.map(quote => {
+        const expired = isQuoteExpired(quote);
+        const expiringSoon = isQuoteExpiringSoon(quote);
+        const cssClass = expired ? 'expired' : (expiringSoon ? 'expiring-soon' : '');
+        
+        return `
+        <div class="data-item ${cssClass}">
             <div class="data-item-content">
                 <div class="data-item-title">
                     Quote #${quote.quoteNumber} - ${quote.customerName}
@@ -107,6 +114,8 @@ async function render() {
                     <span>Valid Until: ${formatDate(quote.validUntil)}</span>
                     <span>Total: ${formatCurrency(quote.totalAmount)}</span>
                     <span class="status-badge ${quote.status.toLowerCase()}">${quote.status}</span>
+                    ${expired ? '<span class="expired-badge">⚠️ EXPIRED</span>' : ''}
+                    ${expiringSoon ? '<span class="expiring-soon-badge">⏰ Expiring Soon</span>' : ''}
                 </div>
             </div>
             <div class="data-item-actions">
@@ -117,7 +126,8 @@ async function render() {
                 <button class="btn btn-small btn-danger" data-action="delete-quote" data-id="${quote.id}">Delete</button>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function openQuoteModal(quote = null) {
@@ -399,6 +409,19 @@ async function saveQuote(form, shouldClose = true) {
     try {
         await storage.saveQuote(quoteData);
         currentQuote = quoteData;
+        
+        // Auto-add customer to contacts if email provided
+        if (quoteData.customerEmail) {
+            const wasAdded = await storage.addContactIfNotExists({
+                name: quoteData.customerName,
+                email: quoteData.customerEmail,
+                phone: '',
+                address: quoteData.customerAddress
+            });
+            if (wasAdded) {
+                showToast('Customer added to contacts', 'info');
+            }
+        }
         
         showToast(quoteData.quoteNumber ? 'Quote saved' : 'Quote created', 'success');
         await refresh();

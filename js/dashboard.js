@@ -18,6 +18,78 @@ export function init() {
             await refresh();
         }
     });
+    
+    // Quick action button handlers
+    setupQuickActions();
+}
+
+function setupQuickActions() {
+    // New Invoice button
+    const quickNewInvoiceBtn = document.getElementById('quickNewInvoice');
+    if (quickNewInvoiceBtn) {
+        quickNewInvoiceBtn.addEventListener('click', () => {
+            // Switch to invoices tab
+            switchToTab('invoices');
+            // Trigger new invoice modal
+            setTimeout(() => {
+                const newInvoiceBtn = document.getElementById('newInvoiceBtn');
+                if (newInvoiceBtn) newInvoiceBtn.click();
+            }, 100);
+        });
+    }
+    
+    // New Quote button
+    const quickNewQuoteBtn = document.getElementById('quickNewQuote');
+    if (quickNewQuoteBtn) {
+        quickNewQuoteBtn.addEventListener('click', () => {
+            // Switch to quotes tab
+            switchToTab('quotes');
+            // Trigger new quote modal
+            setTimeout(() => {
+                const newQuoteBtn = document.getElementById('newQuoteBtn');
+                if (newQuoteBtn) newQuoteBtn.click();
+            }, 100);
+        });
+    }
+    
+    // New Expense button
+    const quickNewExpenseBtn = document.getElementById('quickNewExpense');
+    if (quickNewExpenseBtn) {
+        quickNewExpenseBtn.addEventListener('click', () => {
+            // Switch to expenses tab
+            switchToTab('expenses');
+            // Trigger new expense modal
+            setTimeout(() => {
+                const newExpenseBtn = document.getElementById('newExpenseBtn');
+                if (newExpenseBtn) newExpenseBtn.click();
+            }, 100);
+        });
+    }
+}
+
+function switchToTab(tabName) {
+    // Find and click the nav button for the target tab
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    navButtons.forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    tabContents.forEach(tab => {
+        if (tab.id === tabName) {
+            tab.classList.add('active');
+        } else {
+            tab.classList.remove('active');
+        }
+    });
+    
+    // Dispatch tab changed event
+    window.dispatchEvent(new CustomEvent('tabChanged', { detail: { tab: tabName } }));
 }
 
 async function refresh() {

@@ -1016,3 +1016,160 @@ body {
 #logoutBtn:hover {
     background: #b91c1c;
 }
+
+/* ===========================
+   QUICK ACTIONS
+   =========================== */
+.quick-actions {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+}
+
+.quick-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    min-width: 200px;
+    justify-content: center;
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.quick-action-btn:active {
+    transform: translateY(0);
+}
+
+.quick-action-icon {
+    font-size: 1.5rem;
+}
+
+.quick-action-text {
+    font-size: 1rem;
+}
+
+.quick-action-invoice {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.quick-action-invoice:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.quick-action-quote {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+}
+
+.quick-action-quote:hover {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+}
+
+.quick-action-expense {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.quick-action-expense:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .quick-actions {
+        flex-direction: column;
+    }
+    
+    .quick-action-btn {
+        width: 100%;
+        min-width: auto;
+        padding: 1.25rem 1.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .quick-action-icon {
+        font-size: 1.75rem;
+    }
+}
+
+/* ===========================
+   REMINDER BADGES & HISTORY
+   =========================== */
+.reminder-badge {
+    background: #f59e0b;
+    color: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.reminder-history {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #fef3c7;
+    border-radius: 0.375rem;
+    border-left: 4px solid #f59e0b;
+}
+
+.reminder-history h4 {
+    margin-top: 0;
+    color: #92400e;
+}
+
+.btn-warning {
+    background: #f59e0b;
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #d97706;
+}
+
+/* ===========================
+   QUOTE EXPIRY WARNINGS
+   =========================== */
+.data-item.expired {
+    border-left: 4px solid #ef4444;
+    background: #fef2f2;
+}
+
+.data-item.expiring-soon {
+    border-left: 4px solid #f59e0b;
+    background: #fffbeb;
+}
+
+.expired-badge {
+    background: #ef4444;
+    color: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.expiring-soon-badge {
+    background: #f59e0b;
+    color: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: inline-block;
+}

@@ -92,6 +92,9 @@ function handleInvoiceActions(e) {
         case 'mark-paid':
             markAsPaid(id);
             break;
+        case 'send-reminder':
+            sendReminder(id);
+            break;
         case 'delete-invoice':
             deleteInvoice(id);
             break;
@@ -135,6 +138,9 @@ async function render() {
     
     container.innerHTML = filtered.map(invoice => {
         const overdue = isInvoiceOverdue(invoice);
+        const hasReminders = invoice.reminders && invoice.reminders.length > 0;
+        const lastReminder = hasReminders ? invoice.reminders[invoice.reminders.length - 1] : null;
+        
         return `
         <div class="data-item ${overdue ? 'overdue' : ''}">
             <div class="data-item-content">
@@ -148,6 +154,7 @@ async function render() {
                     <span>Total: ${formatCurrency(invoice.totalAmount)}</span>
                     <span class="status-badge ${invoice.status.toLowerCase()}">${invoice.status}</span>
                     ${overdue ? '<span class="overdue-badge">⚠️ OVERDUE</span>' : ''}
+                    ${lastReminder ? `<span class="reminder-badge">📧 Reminder: ${formatDate(lastReminder.date)}</span>` : ''}
                 </div>
             </div>
             <div class="data-item-actions">
@@ -155,7 +162,8 @@ async function render() {
                 <button class="btn btn-small btn-primary" data-action="edit-invoice" data-id="${invoice.id}">Edit</button>
                 <button class="btn btn-small btn-secondary" data-action="print-invoice" data-id="${invoice.id}">Print</button>
                 ${invoice.status !== 'Paid' ? 
-                    `<button class="btn btn-small btn-success" data-action="mark-paid" data-id="${invoice.id}">Mark Paid</button>` 
+                    `<button class="btn btn-small btn-warning" data-action="send-reminder" data-id="${invoice.id}">Send Reminder</button>
+                    <button class="btn btn-small btn-success" data-action="mark-paid" data-id="${invoice.id}">Mark Paid</button>` 
                     : ''}
                 <button class="btn btn-small btn-danger" data-action="delete-invoice" data-id="${invoice.id}">Delete</button>
             </div>
@@ -446,6 +454,19 @@ async function saveInvoice(form, shouldClose = true) {
         await storage.saveInvoice(invoiceData);
         currentInvoice = invoiceData;
         
+        // Auto-add customer to contacts if email provided
+        if (invoiceData.customerEmail) {
+            const wasAdded = await storage.addContactIfNotExists({
+                name: invoiceData.customerName,
+                email: invoiceData.customerEmail,
+                phone: '',
+                address: invoiceData.customerAddress
+            });
+            if (wasAdded) {
+                showToast('Customer added to contacts', 'info');
+            }
+        }
+        
         showToast(invoiceData.invoiceNumber ? 'Invoice saved' : 'Invoice created', 'success');
         await refresh();
         window.dispatchEvent(new CustomEvent('dataRefresh'));
@@ -478,6 +499,18 @@ function viewInvoice(id) {
                     <p><strong>Date Paid:</strong> ${formatDate(invoice.paidDate)}</p>
                     <p><strong>Payment Method:</strong> ${invoice.paymentMethod}</p>
                     ${invoice.paymentReference ? `<p><strong>Reference:</strong> ${invoice.paymentReference}</p>` : ''}
+                </div>
+            ` : ''}
+            
+            ${invoice.reminders && invoice.reminders.length > 0 ? `
+                <div class="reminder-history" style="margin-top: 1rem; padding: 1rem; background: #fef3c7; border-radius: 0.375rem; border-left: 4px solid #f59e0b;">
+                    <h4 style="margin-top: 0; color: #92400e;">Payment Reminders</h4>
+                    ${invoice.reminders.map(reminder => `
+                        <div style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #fde68a;">
+                            <p style="margin: 0;"><strong>Date:</strong> ${formatDate(reminder.date)}</p>
+                            ${reminder.notes ? `<p style="margin: 0.25rem 0 0 0; color: #78350f;">${reminder.notes}</p>` : ''}
+                        </div>
+                    `).join('')}
                 </div>
             ` : ''}
             
@@ -597,6 +630,70 @@ async function markAsPaid(id) {
                         window.dispatchEvent(new CustomEvent('dataRefresh'));
                     } catch (error) {
                         showToast('Error updating invoice', 'error');
+                        console.error(error);
+                    }
+                }
+            }
+        ]
+    });
+}
+
+async function sendReminder(id) {
+    const invoice = invoices.find(i => i.id === id);
+    if (!invoice) return;
+    
+    // Create reminder form
+    const form = document.createElement('form');
+    form.innerHTML = `
+        <div class="form-group">
+            <label for="reminderDate">Date Sent *</label>
+            <input type="date" id="reminderDate" name="reminderDate" value="${getTodayString()}" required>
+        </div>
+        <div class="form-group">
+            <label for="reminderNotes">Notes (optional)</label>
+            <textarea id="reminderNotes" name="reminderNotes" rows="3" placeholder="e.g., Sent follow-up email, Called customer, etc."></textarea>
+        </div>
+    `;
+    
+    showModal(form, {
+        title: 'Log Payment Reminder',
+        buttons: [
+            {
+                text: 'Cancel',
+                primary: false,
+                onClick: () => {}
+            },
+            {
+                text: 'Save Reminder',
+                primary: true,
+                onClick: async () => {
+                    const reminderDate = form.querySelector('#reminderDate')?.value;
+                    const reminderNotes = form.querySelector('#reminderNotes')?.value || '';
+                    
+                    if (!reminderDate) {
+                        showToast('Please select a date', 'error');
+                        return;
+                    }
+                    
+                    // Initialize reminders array if it doesn't exist
+                    if (!invoice.reminders) {
+                        invoice.reminders = [];
+                    }
+                    
+                    // Add new reminder
+                    invoice.reminders.push({
+                        date: reminderDate,
+                        notes: reminderNotes,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    try {
+                        await storage.saveInvoice(invoice);
+                        showToast('Reminder logged', 'success');
+                        await refresh();
+                        window.dispatchEvent(new CustomEvent('dataRefresh'));
+                    } catch (error) {
+                        showToast('Error saving reminder', 'error');
                         console.error(error);
                     }
                 }
