@@ -133,7 +133,7 @@ async function renderBusinessHeader() {
     try {
         const profile = await storage.getBusinessProfile();
         
-        if (profile && (profile.logoDataUrl || profile.businessName)) {
+        if (profile && profile.logoDataUrl) {
             // Clear container
             container.innerHTML = '';
             
@@ -148,14 +148,6 @@ async function renderBusinessHeader() {
                 logo.alt = 'Business Logo';
                 logo.className = 'dashboard-logo';
                 wrapper.appendChild(logo);
-            }
-            
-            // Add business name if exists
-            if (profile.businessName) {
-                const heading = document.createElement('h2');
-                heading.className = 'dashboard-business-name';
-                heading.textContent = profile.businessName; // Safe - uses textContent instead of innerHTML
-                wrapper.appendChild(heading);
             }
             
             container.appendChild(wrapper);
