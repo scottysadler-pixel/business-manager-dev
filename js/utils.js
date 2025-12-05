@@ -69,6 +69,34 @@ export function isInvoiceOverdue(invoice) {
 }
 
 /**
+ * Check if a quote is expired
+ */
+export function isQuoteExpired(quote) {
+    if (quote.status === 'Accepted' || quote.status === 'Rejected') return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const validUntil = new Date(quote.validUntil);
+    validUntil.setHours(0, 0, 0, 0);
+    return validUntil < today;
+}
+
+/**
+ * Check if a quote is expiring soon (within 7 days)
+ */
+export function isQuoteExpiringSoon(quote) {
+    if (quote.status === 'Accepted' || quote.status === 'Rejected') return false;
+    if (isQuoteExpired(quote)) return false; // Already expired
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const validUntil = new Date(quote.validUntil);
+    validUntil.setHours(0, 0, 0, 0);
+    
+    const daysUntilExpiry = Math.floor((validUntil - today) / (1000 * 60 * 60 * 24));
+    return daysUntilExpiry <= 7 && daysUntilExpiry >= 0;
+}
+
+/**
  * Calculate totals from line items and tax rate
  */
 export function calculateTotal(lineItems, taxRate, gstInclusive = false) {

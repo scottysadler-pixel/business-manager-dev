@@ -289,6 +289,35 @@ export async function deleteContact(id) {
     }
 }
 
+export async function findContactByEmail(email) {
+    if (!email) return null;
+    const contacts = await getContacts();
+    return contacts.find(c => c.email?.toLowerCase() === email?.toLowerCase());
+}
+
+export async function addContactIfNotExists(contactData) {
+    if (!contactData.email) return false;
+    
+    const existing = await findContactByEmail(contactData.email);
+    if (existing) {
+        return false; // already exists
+    }
+    
+    // Generate ID for new contact
+    const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
+    
+    await saveContact({
+        id: id,
+        name: contactData.name || '',
+        email: contactData.email,
+        phone: contactData.phone || '',
+        address: contactData.address || '',
+        createdAt: new Date().toISOString()
+    });
+    
+    return true; // was added
+}
+
 // Business Profile
 export async function getBusinessProfile() {
     try {
